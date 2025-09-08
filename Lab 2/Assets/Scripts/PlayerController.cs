@@ -1,26 +1,38 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
+using UnityEngine.UIElements;
+
 
 public class PlayerController : MonoBehaviour
 {
     public float speed = 0; //starting value is 0
     private Rigidbody rb; //private means this variable can only be accessed within this class, Rigidbody is a data type, rb is the name of the variable
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     private float movementX;
     private float movementY; //floats for precision
     private int count;
+    private float moveCount;
+    public float timeDelay = 1; //slows down the incrementing of moveCount to one unit per second
+    float timer;
+
     public TextMeshProUGUI countText;
+    public TextMeshProUGUI moveText;
     public GameObject winTextObject;
+
+    Vector3 startPoint; //variable to store the starting position of the player
+
     void Start()
     {
         rb = GetComponent<Rigidbody>(); //GetComponent is a method that returns a component of type Rigidbody attached to the same GameObject as this script, called on first frame so player can move sphere straight away
         count = 0;
+        moveCount = 0;
         SetCountText();
+        SetMoveText();
         winTextObject.SetActive(false); 
     }
+
     void OnMove(InputValue movementValue) //void means the function does not return a value, functions input parameters are in (), InputValue is a data type, movementValue is name 
-    {   
+    {
         // function body/instructions for the function OnMove()
         Vector2 movementVector = movementValue.Get<Vector2>(); //Vector2 is a data type, movementVector is name, Get is a method that returns a value of type Vector2
 
@@ -31,19 +43,44 @@ public class PlayerController : MonoBehaviour
     void SetCountText()
     {
         countText.text = "Count: " + count.ToString(); //countText is a TextMeshProUGUI object, text is a property of TextMeshProUGUI that sets the displayed text, count.ToString() converts the integer count to a string
-        if(count >= 12)
+        if (count >= 12)
         {
             winTextObject.SetActive(true);
 
             Destroy(GameObject.FindGameObjectWithTag("Enemy"));
         }
     }
+
+
+    void SetMoveText()
+    {
+        moveText.text = "Moves: " + moveCount.ToString();
+    }
+
+
+  
     void FixedUpdate() // FixedUpdate is called at a fixed interval and is independent of frame rate. Put physics code here.
     {
         Vector3 movement = new Vector3(movementX, 0.0f, movementY);
 
         rb.AddForce(movement * speed);
+
+        if (rb.angularVelocity.magnitude > 0.1f) //if the player is moving
+        {
+            if (timer < timeDelay) 
+            {
+                timer += Time.deltaTime; //increment timer by the time since the last frame 
+            }
+            else
+            {
+                moveCount += 1; //increment moveCount by 1
+                timer = 0; //reset timer to 0
+            }
+           
+        }
+        SetMoveText();
     }
+
 
     private void OnTriggerEnter(Collider other)
     {
@@ -55,6 +92,7 @@ public class PlayerController : MonoBehaviour
                 SetCountText();
             }
     }
+
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -68,3 +106,10 @@ public class PlayerController : MonoBehaviour
     }
 
 }
+
+
+/* 
+      SOURCES: Lab_02_NewRollABall_sol 
+      - used PlayerController.cs as a reference for the movement counter 
+      - Unity Learn Roll a Ball Tutorial, https://learn.unity.com/tutorial/roll-a-ball-tutorial#5c7f8528edbc2a002053b5f0
+*/
